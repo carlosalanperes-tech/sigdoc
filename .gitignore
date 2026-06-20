@@ -1,0 +1,25 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+coverage/
+
+# Arquivos de ambiente
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploads temporários
+uploads/
+temp/
+
+# Prisma
+.prisma/client
+
+# Sistema
+.DS_Store
+Thumbs.db
