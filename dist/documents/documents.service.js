@@ -87,6 +87,9 @@ let DocumentsService = class DocumentsService {
                 user: process.env.MAIL_USER,
                 pass: process.env.MAIL_PASS,
             },
+            tls: {
+                rejectUnauthorized: false,
+            },
         });
         const to = data.to || document.recipient_email;
         if (!to) {
@@ -138,6 +141,50 @@ let DocumentsService = class DocumentsService {
             document_code: document.document_code,
             recipient_email: to,
         };
+    }
+    async getApprovals(id) {
+        const document = await this.prisma.documents.findUnique({
+            where: {
+                id: BigInt(id),
+            },
+        });
+        if (!document) {
+            throw new common_1.NotFoundException('Documento não encontrado');
+        }
+        const approvals = await this.prisma.document_approvals.findMany({
+            where: {
+                document_id: BigInt(id),
+            },
+            orderBy: {
+                requested_at: 'desc',
+            },
+            include: {
+                users_document_approvals_requested_byTousers: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                users_document_approvals_approved_byTousers: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+        return convertBigIntToString(approvals.map((approval) => ({
+            id: approval.id,
+            document_id: approval.document_id,
+            status: approval.status,
+            comments: approval.comments,
+            requested_at: approval.requested_at,
+            decided_at: approval.decided_at,
+            requested_by: approval.users_document_approvals_requested_byTousers,
+            approved_by: approval.users_document_approvals_approved_byTousers,
+        })));
     }
     async generatePdf(id) {
         const document = await this.findOne(id);
@@ -307,7 +354,7 @@ Regras:
             content = response.output_text;
         }
         catch (error) {
-            console.error('Erro ao gerar documento com IA:', error);
+            console.error('ERRO OPENAI - USANDO FALLBACK:', error);
             generatedByAI = false;
             content = `
 ${template.title}
@@ -345,6 +392,35 @@ Sem mais para o momento, renovamos votos de estima e consideração.
             ...doc,
             document_code: buildDocumentCode(doc),
         }));
+    }
+    async requestApproval(id, user) {
+        const document = await this.prisma.documents.findUnique({
+            where: { id: BigInt(id) },
+        });
+        if (!document) {
+            throw new common_1.NotFoundException('Documento não encontrado');
+        }
+        if (document.status !== 'draft') {
+            throw new common_1.BadRequestException('Somente documentos em rascunho podem ser enviados para aprovação');
+        }
+        const updated = await this.prisma.documents.update({
+            where: { id: BigInt(id) },
+            data: { status: 'pending_approval' },
+        });
+        await this.prisma.document_approvals.create({
+            data: {
+                document_id: BigInt(id),
+                requested_by: BigInt(user.userId),
+                status: 'pending',
+                comments: 'Documento enviado para aprovação',
+            },
+        });
+        const result = convertBigIntToString(updated);
+        return {
+            message: 'Documento enviado para aprovação com sucesso',
+            ...result,
+            document_code: buildDocumentCode(result),
+        };
     }
     async approve(id, data, user) {
         const document = await this.prisma.documents.findUnique({
@@ -426,8 +502,8 @@ Sem mais para o momento, renovamos votos de estima e consideração.
         if (!existing) {
             throw new common_1.NotFoundException('Documento não encontrado');
         }
-        if (existing.status !== 'draft') {
-            throw new common_1.BadRequestException('Somente documentos em rascunho podem ser editados');
+        if (existing.status !== 'draft' && existing.status !== 'review') {
+            throw new common_1.BadRequestException('Somente documentos em rascunho ou revisão podem ser editados');
         }
         const updated = await this.prisma.documents.update({
             where: {

@@ -10,9 +10,11 @@ export declare class DocumentsController {
         document_code: any;
         recipient_email: any;
     }>;
+    requestApproval(id: string, req: any): Promise<any>;
     approve(id: string, body: any, req: any): Promise<any>;
     reject(id: string, body: any, req: any): Promise<any>;
     generatePdf(id: string, res: any): Promise<void>;
+    getApprovals(id: string): Promise<any>;
     findOne(id: string): Promise<any>;
     updateStatus(id: string, body: any): Promise<any>;
     update(id: string, body: any): Promise<any>;

@@ -10,10 +10,12 @@ export declare class DocumentsService {
         document_code: any;
         recipient_email: any;
     }>;
+    getApprovals(id: string): Promise<any>;
     generatePdf(id: string): Promise<Uint8Array<ArrayBufferLike>>;
     updateStatus(id: string, status: documents_status): Promise<any>;
     generate(data: any, user: any): Promise<any>;
     findAll(): Promise<any>;
+    requestApproval(id: string, user: any): Promise<any>;
     approve(id: string, data: any, user: any): Promise<any>;
     reject(id: string, data: any, user: any): Promise<any>;
     findOne(id: string): Promise<any>;

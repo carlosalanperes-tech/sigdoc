@@ -32,6 +32,9 @@ let DocumentsController = class DocumentsController {
     sendByEmail(id, body, req) {
         return this.documentsService.sendByEmail(id, body, req.user);
     }
+    requestApproval(id, req) {
+        return this.documentsService.requestApproval(id, req.user);
+    }
     approve(id, body, req) {
         return this.documentsService.approve(id, body, req.user);
     }
@@ -45,6 +48,9 @@ let DocumentsController = class DocumentsController {
             'Content-Disposition': `inline; filename="documento-${id}.pdf"`,
         });
         res.send(pdf);
+    }
+    getApprovals(id) {
+        return this.documentsService.getApprovals(id);
     }
     findOne(id) {
         return this.documentsService.findOne(id);
@@ -91,6 +97,16 @@ __decorate([
 ], DocumentsController.prototype, "sendByEmail", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(1, 2, 3),
+    (0, common_1.Post)(':id/request-approval'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], DocumentsController.prototype, "requestApproval", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(1, 2, 4),
     (0, common_1.Post)(':id/approve'),
     __param(0, (0, common_1.Param)('id')),
@@ -124,6 +140,15 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(1, 2, 3, 4, 5),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(1, 2, 3, 4, 5),
+    (0, common_1.Get)(':id/approvals'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], DocumentsController.prototype, "getApprovals", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
